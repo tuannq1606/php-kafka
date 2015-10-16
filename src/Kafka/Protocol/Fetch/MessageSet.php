@@ -14,7 +14,10 @@
 
 namespace Kafka\Protocol\Fetch;
 
-use \Kafka\Protocol\Decoder;
+use Kafka\Exception;
+use Kafka\Exception\OutOfRange;
+use Kafka\Log;
+use Decoder;
 
 /**
 +------------------------------------------------------------------------------
@@ -59,7 +62,7 @@ class MessageSet implements \Iterator
     /**
      * messageSet offset
      *
-     * @var float
+     * @var int
      * @access private
      */
     private $offset = 0;
@@ -75,7 +78,7 @@ class MessageSet implements \Iterator
     /**
      * partition object
      *
-     * @var \Kafka\Protocol\Fetch\Partition
+     * @var Partition
      * @access private
      */
     private $partition = null;
@@ -87,6 +90,8 @@ class MessageSet implements \Iterator
      */
     private $context = array();
 
+    private $current = null;
+
     // }}}
     // {{{ functions
     // {{{ public function __construct()
@@ -94,18 +99,18 @@ class MessageSet implements \Iterator
     /**
      * __construct
      *
-     * @param \Kafka\Socket $stream
-     * @param int $initOffset
+     * @param Partition $partition
+     * @param array     $context
+     *
      * @access public
-     * @return void
      */
-    public function __construct(\Kafka\Protocol\Fetch\Partition $partition, $context = array())
+    public function __construct(Partition $partition, $context = array())
     {
         $this->stream = $partition->getStream();
         $this->partition = $partition;
         $this->context   = $context;
         $this->messageSetSize = $this->getMessageSetSize();
-        \Kafka\Log::log("messageSetSize: {$this->messageSetSize}", LOG_INFO);
+        Log::log("messageSetSize: {$this->messageSetSize}", LOG_INFO);
     }
 
     // }}}
@@ -115,7 +120,7 @@ class MessageSet implements \Iterator
      * current
      *
      * @access public
-     * @return void
+     * @return Message
      */
     public function current()
     {
@@ -129,7 +134,7 @@ class MessageSet implements \Iterator
      * key
      *
      * @access public
-     * @return void
+     * @return string
      */
     public function key()
     {
@@ -165,7 +170,7 @@ class MessageSet implements \Iterator
             $this->partition->setMessageOffset($this->offset);
 
             // one partition iterator end
-            \Kafka\Protocol\Fetch\Helper\Helper::onPartitionEof($this->partition);
+            Helper\Helper::onPartitionEof($this->partition);
         }
 
         return $this->valid;
@@ -201,7 +206,7 @@ class MessageSet implements \Iterator
         $data = Decoder::unpack(Decoder::BIT_B32, $data);
         $size = array_shift($data);
         if ($size <= 0) {
-            throw new \Kafka\Exception\OutOfRange($size . ' is not a valid message size');
+            throw new OutOfRange($size . ' is not a valid message size');
         }
 
         return $size;
@@ -214,7 +219,7 @@ class MessageSet implements \Iterator
      * load next message
      *
      * @access public
-     * @return void
+     * @return bool
      */
     public function loadNextMessage()
     {
@@ -229,7 +234,7 @@ class MessageSet implements \Iterator
                 return false;
             }
             $offset = $this->stream->read(8, true);
-            $this->offset  = \Kafka\Protocol\Decoder::unpack(Decoder::BIT_B64, $offset);
+            $this->offset  = Decoder::unpack(Decoder::BIT_B64, $offset);
             $messageSize = $this->stream->read(4, true);
             $messageSize = Decoder::unpack(Decoder::BIT_B32, $messageSize);
             $messageSize = array_shift($messageSize);
@@ -241,8 +246,8 @@ class MessageSet implements \Iterator
             }
             $msg  = $this->stream->read($messageSize, true);
             $this->current = new Message($msg);
-        } catch (\Kafka\Exception $e) {
-            \Kafka\Log::log("already fetch: {$this->validByteCount}, {$e->getMessage()}", LOG_INFO);
+        } catch (Exception $e) {
+            Log::log("already fetch: {$this->validByteCount}, {$e->getMessage()}", LOG_INFO);
             return false;
         }
 
@@ -257,7 +262,7 @@ class MessageSet implements \Iterator
     /**
      * current message offset in producer
      *
-     * @return void
+     * @return int
      */
     public function messageOffset()
     {

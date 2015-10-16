@@ -14,6 +14,9 @@
 
 namespace Kafka\Protocol\Fetch;
 
+use Guzzle\Stream\Stream;
+use Kafka\Exception;
+use Kafka\Exception\OutOfRange;
 use \Kafka\Protocol\Decoder;
 
 /**
@@ -127,10 +130,10 @@ class Topic implements \Iterator, \Countable
     /**
      * __construct
      *
-     * @param \Kafka\Socket $stream
-     * @param int $initOffset
+     * @param       $streams
+     * @param array $context
+     *
      * @access public
-     * @return void
      */
     public function __construct($streams, $context = array())
     {
@@ -168,7 +171,7 @@ class Topic implements \Iterator, \Countable
      * current
      *
      * @access public
-     * @return void
+     * @return Partition
      */
     public function current()
     {
@@ -182,7 +185,7 @@ class Topic implements \Iterator, \Countable
      * key
      *
      * @access public
-     * @return void
+     * @return string
      */
     public function key()
     {
@@ -267,7 +270,7 @@ class Topic implements \Iterator, \Countable
             $count += $topicCount;
             $this->topicCounts[$key] = $topicCount;
             if ($count <= 0) {
-                throw new \Kafka\Exception\OutOfRange($count . ' is not a valid topic count');
+                throw new OutOfRange($count . ' is not a valid topic count');
             }
         }
 
@@ -281,17 +284,17 @@ class Topic implements \Iterator, \Countable
      * load next topic
      *
      * @access public
-     * @return void
+     * @return bool
      */
     public function loadNextTopic()
     {
         if ($this->validCount >= $this->topicCount) {
-            \Kafka\Protocol\Fetch\Helper\Helper::onStreamEof($this->currentStreamLockKey);
+            Helper\Helper::onStreamEof($this->currentStreamLockKey);
             return false;
         }
 
         if ($this->currentStreamCount >= $this->topicCounts[$this->currentStreamKey]) {
-            \Kafka\Protocol\Fetch\Helper\Helper::onStreamEof($this->currentStreamLockKey);
+            Helper\Helper::onStreamEof($this->currentStreamLockKey);
             $this->currentStreamKey++;
         }
 
@@ -315,7 +318,7 @@ class Topic implements \Iterator, \Countable
             // topic name
             $this->key = $stream->read($topicLen, true);
             $this->current = new Partition($this, $this->context);
-        } catch (\Kafka\Exception $e) {
+        } catch (Exception $e) {
             return false;
         }
 

@@ -14,7 +14,10 @@
 
 namespace Kafka\Protocol\Fetch;
 
-use \Kafka\Protocol\Decoder;
+use Kafka\Exception;
+use Kafka\Exception\OutOfRange;
+use Kafka\Log;
+use Decoder;
 
 /**
 +------------------------------------------------------------------------------
@@ -127,12 +130,12 @@ class Partition implements \Iterator, \Countable
     /**
      * __construct
      *
-     * @param \Kafka\Protocol\Fetch\Topic $topic
-     * @param int $initOffset
+     * @param Topic $topic
+     * @param array $context
+     *
      * @access public
-     * @return void
      */
-    public function __construct(\Kafka\Protocol\Fetch\Topic $topic, $context = array())
+    public function __construct(Topic $topic, $context = array())
     {
         $this->stream    = $topic->getStream();
         $this->topicName = $topic->key();
@@ -147,7 +150,7 @@ class Partition implements \Iterator, \Countable
      * current
      *
      * @access public
-     * @return void
+     * @return MessageSet
      */
     public function current()
     {
@@ -161,7 +164,7 @@ class Partition implements \Iterator, \Countable
      * key
      *
      * @access public
-     * @return void
+     * @return string
      */
     public function key()
     {
@@ -231,7 +234,7 @@ class Partition implements \Iterator, \Countable
      * get partition errcode
      *
      * @access public
-     * @return void
+     * @return int
      */
     public function getErrCode()
     {
@@ -245,7 +248,7 @@ class Partition implements \Iterator, \Countable
      * get partition high offset
      *
      * @access public
-     * @return void
+     * @return int
      */
     public function getHighOffset()
     {
@@ -259,7 +262,7 @@ class Partition implements \Iterator, \Countable
      * get partition topic name
      *
      * @access public
-     * @return void
+     * @return string
      */
     public function getTopicName()
     {
@@ -297,7 +300,7 @@ class Partition implements \Iterator, \Countable
         $data = Decoder::unpack(Decoder::BIT_B32, $data);
         $count = array_shift($data);
         if ($count <= 0) {
-            throw new \Kafka\Exception\OutOfRange($size . ' is not a valid partition count');
+            throw new OutOfRange($size . ' is not a valid partition count');
         }
 
         return $count;
@@ -310,7 +313,7 @@ class Partition implements \Iterator, \Countable
      * load next partition
      *
      * @access public
-     * @return void
+     * @return bool
      */
     public function loadNextPartition()
     {
@@ -322,20 +325,20 @@ class Partition implements \Iterator, \Countable
             $partitionId = $this->stream->read(4, true);
             $partitionId = Decoder::unpack(Decoder::BIT_B32, $partitionId);
             $partitionId = array_shift($partitionId);
-            \Kafka\Log::log("kafka client:fetch partition:" . $partitionId, LOG_INFO);
+            Log::log("kafka client:fetch partition:" . $partitionId, LOG_INFO);
 
             $errCode = $this->stream->read(2, true);
             $errCode = Decoder::unpack(Decoder::BIT_B16, $errCode);
             $this->errCode = array_shift($errCode);
             if ($this->errCode != 0) {
-                throw new \Kafka\Exception(\Kafka\Protocol\Decoder::getError($this->errCode));
+                throw new Exception(Decoder::getError($this->errCode));
             }
             $offset = $this->stream->read(8, true);
-            $this->offset  = \Kafka\Protocol\Decoder::unpack(Decoder::BIT_B64, $offset);
+            $this->offset  = Decoder::unpack(Decoder::BIT_B64, $offset);
 
             $this->key = $partitionId;
             $this->current = new MessageSet($this, $this->context);
-        } catch (\Kafka\Exception $e) {
+        } catch (Exception $e) {
             return false;
         }
 
@@ -349,7 +352,7 @@ class Partition implements \Iterator, \Countable
     /**
      * set messageSet fetch offset current
      *
-     * @param  intger $offset
+     * @param  int $offset
      * @return void
      */
     public function setMessageOffset($offset)

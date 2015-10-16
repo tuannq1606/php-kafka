@@ -13,6 +13,7 @@
 // +---------------------------------------------------------------------------
 
 namespace Kafka\Protocol\Fetch\Helper;
+use Kafka\Exception;
 
 /**
 +------------------------------------------------------------------------------
@@ -31,7 +32,7 @@ class Helper
     // {{{ members
 
     /**
-     * helper object
+     * @var HelperAbstract[]
      */
     private static $helpers = array();
 
@@ -42,9 +43,10 @@ class Helper
     /**
      * register helper
      *
-     * @param string $key
-     * @param \Kafka\Protocol\Fetch\Helper\HelperAbstract $helper
-     * @static
+     * @param string         $key
+     * @param HelperAbstract $helper
+     *
+*@static
      * @access public
      * @return void
      */
@@ -53,15 +55,15 @@ class Helper
         if (is_null($helper)) {
             $className = '\\Kafka\\Protocol\\Fetch\\Helper\\' . $key;
             if (!class_exists($className)) {
-                throw new \Kafka\Exception('helper is not exists.');
+                throw new Exception('helper is not exists.');
             }
             $helper = new $className();
         }
 
-        if ($helper instanceof \Kafka\Protocol\Fetch\Helper\HelperAbstract) {
+        if ($helper instanceof HelperAbstract) {
             self::$helpers[$key] = $helper;
         } else {
-            throw new \Kafka\Exception('this helper not instance of `\Kafka\Protocol\Fetch\Helper\HelperAbstract`');
+            throw new Exception('this helper not instance of `\Kafka\Protocol\Fetch\Helper\HelperAbstract`');
         }
     }
 
@@ -92,7 +94,7 @@ class Helper
      * @param string $streamKey
      * @static
      * @access public
-     * @return void
+     * @return bool
      */
     public static function onStreamEof($streamKey)
     {
@@ -105,6 +107,8 @@ class Helper
                 $helper->onStreamEof($streamKey);
             }
         }
+
+        return true;
     }
 
     // }}}
@@ -116,7 +120,7 @@ class Helper
      * @param string $topicName
      * @static
      * @access public
-     * @return void
+     * @return bool
      */
     public static function onTopicEof($topicName)
     {
@@ -129,6 +133,8 @@ class Helper
                 $helper->onStreamEof($topicName);
             }
         }
+
+        return true;
     }
 
     // }}}
@@ -140,7 +146,7 @@ class Helper
      * @param \Kafka\Protocol\Fetch\Partition $partition
      * @static
      * @access public
-     * @return void
+     * @return bool
      */
     public static function onPartitionEof($partition)
     {
@@ -153,6 +159,8 @@ class Helper
                 $helper->onPartitionEof($partition);
             }
         }
+
+        return true;
     }
 
     // }}}

@@ -96,7 +96,12 @@ class Produce
      * set send messages
      *
      * @access public
-     * @return void
+     *
+     * @param      $hostList
+     * @param      $timeout
+     * @param null $kafkaHostList
+     *
+     * @return $this
      */
     public static function getInstance($hostList, $timeout, $kafkaHostList = null)
     {
@@ -114,18 +119,21 @@ class Produce
      * __construct
      *
      * @access public
-     * @return void
+     *
+     * @param      $hostList
+     * @param null $timeout
+     * @param null $kafkaHostList
      */
     public function __construct($hostList, $timeout = null, $kafkaHostList = null)
     {
-        if ($hostList instanceof \Kafka\ClusterMetaData) {
+        if ($hostList instanceof ClusterMetaData) {
             $metadata = $hostList;
         } elseif ( $kafkaHostList !== null ) {
-            $metadata = new \Kafka\MetaDataFromKafka($kafkaHostList);
+            $metadata = new MetaDataFromKafka($kafkaHostList);
         } else {
-            $metadata = new \Kafka\ZooKeeper($hostList, $timeout);
+            $metadata = new ZooKeeper($hostList, $timeout);
         }
-        $this->client = new \Kafka\Client($metadata);
+        $this->client = new Client($metadata);
     }
 
     // }}}
@@ -135,7 +143,12 @@ class Produce
      * set send messages
      *
      * @access public
-     * @return void
+     *
+     * @param       $topicName
+     * @param int   $partitionId
+     * @param array $messages
+     *
+     * @return $this
      */
     public function setMessages($topicName, $partitionId = 0, $messages = array())
     {
@@ -166,7 +179,7 @@ class Produce
      *
      * @param int $ack
      * @access public
-     * @return void
+     * @return $this
      */
     public function setRequireAck($ack = 0)
     {
@@ -185,7 +198,7 @@ class Produce
      *
      * @param int $timeout
      * @access public
-     * @return void
+     * @return $this
      */
     public function setTimeOut($timeout = 100)
     {
@@ -202,7 +215,7 @@ class Produce
      * send message to broker
      *
      * @access public
-     * @return void
+     * @return bool|array
      */
     public function send()
     {
@@ -215,10 +228,10 @@ class Produce
         foreach ($data as $host => $requestData) {
             $stream = $this->client->getStream($host);
             $conn   = $stream['stream'];
-            $encoder = new \Kafka\Protocol\Encoder($conn);
+            $encoder = new Protocol\Encoder($conn);
             $encoder->produceRequest($requestData);
             if ((int) $this->requiredAck !== 0) { // get broker response
-                $decoder = new \Kafka\Protocol\Decoder($conn);
+                $decoder = new Protocol\Decoder($conn);
                 $response = $decoder->produceResponse();
                 foreach ($response as $topicName => $info) {
                     if (!isset($responseData[$topicName])) {
@@ -243,7 +256,7 @@ class Produce
      * get client object
      *
      * @access public
-     * @return void
+     * @return Client
      */
     public function getClient()
     {
@@ -268,6 +281,9 @@ class Produce
      * get available partition
      *
      * @access public
+     *
+     * @param $topicName
+     *
      * @return array
      */
     public function getAvailablePartitions($topicName)

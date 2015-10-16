@@ -26,7 +26,7 @@ namespace Kafka;
 +------------------------------------------------------------------------------
 */
 
-class ZooKeeper implements \Kafka\ClusterMetaData
+class ZooKeeper implements ClusterMetaData
 {
     // {{{ consts
 
@@ -84,7 +84,9 @@ class ZooKeeper implements \Kafka\ClusterMetaData
      * __construct
      *
      * @access public
-     * @return void
+     *
+     * @param      $hostList
+     * @param null $timeout
      */
     public function __construct($hostList, $timeout = null)
     {
@@ -128,8 +130,9 @@ class ZooKeeper implements \Kafka\ClusterMetaData
      * get broker detail
      *
      * @param integer $brokerId
+     *
      * @access public
-     * @return void
+     * @return array|bool
      */
     public function getBrokerDetail($brokerId)
     {
@@ -155,7 +158,7 @@ class ZooKeeper implements \Kafka\ClusterMetaData
      *
      * @param string $topicName
      * @access public
-     * @return void
+     * @return bool|array
      */
     public function getTopicDetail($topicName)
     {
@@ -181,7 +184,7 @@ class ZooKeeper implements \Kafka\ClusterMetaData
      * @param string $topicName
      * @param integer $partitionId
      * @access public
-     * @return void
+     * @return bool|array
      */
     public function getPartitionState($topicName, $partitionId = 0)
     {
@@ -204,10 +207,12 @@ class ZooKeeper implements \Kafka\ClusterMetaData
     /**
      * register consumer
      *
-     * @param string $topicName
-     * @param integer $partitionId
+     * @param       $groupId
+     * @param       $consumerId
+     * @param array $topics
+     *
+     * @return bool
      * @access public
-     * @return void
      */
     public function registerConsumer($groupId, $consumerId, $topics = array())
     {
@@ -231,6 +236,8 @@ class ZooKeeper implements \Kafka\ClusterMetaData
         } else {
             $this->zookeeper->set($path, json_encode($data));
         }
+
+        return true;
     }
 
     // }}}
@@ -241,7 +248,7 @@ class ZooKeeper implements \Kafka\ClusterMetaData
      *
      * @param string $groupId
      * @access public
-     * @return void
+     * @return array
      */
     public function listConsumer($groupId)
     {

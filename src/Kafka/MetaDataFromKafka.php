@@ -36,7 +36,7 @@ class MetaDataFromKafka implements ClusterMetaData
     /**
      * client
      *
-     * @var \Kafka\Client
+     * @var Client
      * @access private
      */
     private $client;
@@ -88,11 +88,11 @@ class MetaDataFromKafka implements ClusterMetaData
     // {{{ public function setClient()
 
     /**
-     * @var \Kafka\Client $client
+     * @var Client $client
      * @access public
      * @return void
      */
-    public function setClient(\Kafka\Client $client)
+    public function setClient(Client $client)
     {
         $this->client = $client;
     }
@@ -167,7 +167,7 @@ class MetaDataFromKafka implements ClusterMetaData
     private function loadTopicDetail(array $topics)
     {
         if ($this->client === null) {
-            throw new \Kafka\Exception('client was not provided');
+            throw new Exception('client was not provided');
         }
         $response = null;
         foreach ($this->hostList as $host) {
@@ -175,13 +175,13 @@ class MetaDataFromKafka implements ClusterMetaData
                 $response = null;
                 $stream = $this->client->getStream($host);
                 $conn = $stream['stream'];
-                $encoder = new \Kafka\Protocol\Encoder($conn);
+                $encoder = new Protocol\Encoder($conn);
                 $encoder->metadataRequest($topics);
-                $decoder = new \Kafka\Protocol\Decoder($conn);
+                $decoder = new Protocol\Decoder($conn);
                 $response = $decoder->metadataResponse();
                 $this->client->freeStream($stream['key']);
                 break;
-            } catch (\Kafka\Exception $e) {
+            } catch (Exception $e) {
                 // keep trying
             }
         }
@@ -191,7 +191,7 @@ class MetaDataFromKafka implements ClusterMetaData
             $this->brokers = $response['brokers'] + $this->brokers;
             $this->topics = array_merge($response['topics'], $this->topics);
         } else {
-            throw new \Kafka\Exception('Could not connect to any kafka brokers');
+            throw new Exception('Could not connect to any kafka brokers');
         }
     }
 

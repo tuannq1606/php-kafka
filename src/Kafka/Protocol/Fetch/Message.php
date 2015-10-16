@@ -98,8 +98,8 @@ class Message
      * __construct
      *
      * @param string(raw) $msg
+     *
      * @access public
-     * @return void
      */
     public function __construct($msg)
     {
@@ -163,7 +163,7 @@ class Message
      * __toString
      *
      * @access public
-     * @return void
+     * @return string
      */
     public function __toString()
     {

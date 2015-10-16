@@ -77,7 +77,8 @@ class Client
      * __construct
      *
      * @access public
-     * @return void
+     *
+     * @param ClusterMetaData $metadata
      */
     public function __construct(ClusterMetaData $metadata)
     {
@@ -133,7 +134,7 @@ class Client
             foreach ($streams as $key => $info) {
                 // Update options
                 if (isset($info['stream'])) {
-                    /** @var \Kafka\Socket $stream */
+                    /** @var Socket $stream */
                     $stream = $info['stream'];
                     $stream->setRecvTimeoutSec($this->streamOptions['RecvTimeoutSec']);
                     $stream->setRecvTimeoutUsec($this->streamOptions['SendTimeoutUsec']);
@@ -151,7 +152,7 @@ class Client
      * get broker server
      *
      * @access public
-     * @return void
+     * @return array
      */
     public function getBrokers()
     {
@@ -183,14 +184,14 @@ class Client
     {
         $partitionInfo = $this->metadata->getPartitionState($topicName, $partitionId);
         if (!$partitionInfo) {
-            throw new \Kafka\Exception('topic:' . $topicName . ', partition id: ' . $partitionId . ' is not exists.');
+            throw new Exception('topic:' . $topicName . ', partition id: ' . $partitionId . ' is not exists.');
         }
 
         $hostList = $this->getBrokers();
         if (isset($partitionInfo['leader']) && isset($hostList[$partitionInfo['leader']])) {
             return $hostList[$partitionInfo['leader']];
         } else {
-            throw new \Kafka\Exception('can\'t find broker host.');
+            throw new Exception('can\'t find broker host.');
         }
     }
 
@@ -201,14 +202,14 @@ class Client
      * get kafka zookeeper object
      *
      * @access public
-     * @return \Kafka\ZooKeeper
+     * @return ZooKeeper
      */
     public function getZooKeeper()
     {
-        if ($this->metadata instanceof \Kafka\ZooKeeper) {
+        if ($this->metadata instanceof ZooKeeper) {
                 return $this->metadata;
         } else {
-                throw new \Kafka\Exception( 'ZooKeeper was not provided' );
+                throw new Exception( 'ZooKeeper was not provided' );
         }
     }
 
@@ -219,8 +220,10 @@ class Client
      * get broker broker connect
      *
      * @param string $host
+     * @param null   $lockKey
+     *
+     * @return array
      * @access private
-     * @return void
      */
     public function getStream($host, $lockKey = null)
     {
@@ -243,7 +246,7 @@ class Client
         }
 
         // no idle stream
-        $stream = new \Kafka\Socket($hostname, $port, $this->getStreamOption('RecvTimeoutSec'), $this->getStreamOption('RecvTimeoutUsec'), $this->getStreamOption('SendTimeoutSec'), $this->getStreamOption('SendTimeoutUsec'));
+        $stream = new Socket($hostname, $port, $this->getStreamOption('RecvTimeoutSec'), $this->getStreamOption('RecvTimeoutUsec'), $this->getStreamOption('SendTimeoutSec'), $this->getStreamOption('SendTimeoutUsec'));
         $stream->connect();
         self::$stream[$host][$lockKey] = array(
             'locked' => true,

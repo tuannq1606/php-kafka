@@ -119,7 +119,11 @@ class Offset
      * __construct
      *
      * @access public
-     * @return void
+     *
+     * @param     $client
+     * @param     $groupId
+     * @param     $topicName
+     * @param int $partitionId
      */
     public function __construct($client, $groupId, $topicName, $partitionId = 0)
     {
@@ -132,8 +136,8 @@ class Offset
         $stream = $this->client->getStream($host);
         $conn   = $stream['stream'];
         $this->streamKey = $stream['key'];
-        $this->encoder = new \Kafka\Protocol\Encoder($conn);
-        $this->decoder = new \Kafka\Protocol\Decoder($conn);
+        $this->encoder = new Protocol\Encoder($conn);
+        $this->decoder = new Protocol\Decoder($conn);
     }
 
     // }}}
@@ -150,7 +154,7 @@ class Offset
     {
         $maxOffset = $this->getProduceOffset();
         if ($offset > $maxOffset) {
-            throw new \Kafka\Exception('this offset is invalid. must less than max offset:' . $maxOffset);
+            throw new Exception('this offset is invalid. must less than max offset:' . $maxOffset);
         }
 
         $data = array(
@@ -175,10 +179,10 @@ class Offset
         $result = $this->decoder->commitOffsetResponse();
         $this->client->freeStream($this->streamKey);
         if (!isset($result[$topicName][$partitionId]['errCode'])) {
-            throw new \Kafka\Exception('commit topic offset failed.');
+            throw new Exception('commit topic offset failed.');
         }
         if ($result[$topicName][$partitionId]['errCode'] != 0) {
-            throw new \Kafka\Exception(\Kafka\Protocol\Decoder::getError($result[$topicName][$partitionId]['errCode']));
+            throw new Exception(Protocol\Decoder::getError($result[$topicName][$partitionId]['errCode']));
         }
     }
 
@@ -192,7 +196,7 @@ class Offset
      *   if defaultOffset -1 instead of early offset
      *   if defaultOffset -2 instead of last offset
      * @access public
-     * @return void
+     * @return int
      */
     public function getOffset($defaultOffset = self::DEFAULT_LAST)
     {
@@ -219,13 +223,13 @@ class Offset
         $topicName = $this->topicName;
         $partitionId = $this->partitionId;
         if (!isset($result[$topicName][$partitionId]['errCode'])) {
-            throw new \Kafka\Exception('fetch topic offset failed.');
+            throw new Exception('fetch topic offset failed.');
         }
         if ($result[$topicName][$partitionId]['errCode'] == 3) {
             switch ($defaultOffset) {
                 case self::DEFAULT_LAST:
-                    return $maxOffset;
                     Log::log("topic name: $topicName, partitionId: $partitionId, get offset value is default last.", LOG_INFO);
+                    return $maxOffset;
                 case self::DEFAULT_EARLY:
                     Log::log("topic name: $topicName, partitionId: $partitionId, get offset value is default early.", LOG_INFO);
                     return $minOffset;
@@ -233,10 +237,6 @@ class Offset
                     $this->setOffset($defaultOffset);
                     Log::log("topic name: $topicName, partitionId: $partitionId, get offset value is default $defaultOffset.", LOG_INFO);
                     return $defaultOffset;
-            }
-            if ($defaultOffset) {
-                $this->setOffset($defaultOffset);
-                return $defaultOffset;
             }
         } elseif ($result[$topicName][$partitionId]['errCode'] == 0) {
             $offset = $result[$topicName][$partitionId]['offset'];
@@ -251,7 +251,7 @@ class Offset
 
             return $offset;
         } else {
-            throw new \Kafka\Exception(\Kafka\Protocol\Decoder::getError($result[$topicName][$partitionId]['errCode']));
+            throw new Exception(Protocol\Decoder::getError($result[$topicName][$partitionId]['errCode']));
         }
     }
 
@@ -261,10 +261,10 @@ class Offset
     /**
      * get produce server offset
      *
-     * @param string $topicName
-     * @param integer $partitionId
-     * @access public
+     * @param int $timeLine
+     *
      * @return int
+     * @access public
      */
     public function getProduceOffset($timeLine = self::LAST_OFFSET)
     {
@@ -291,9 +291,9 @@ class Offset
 
         if (!isset($result[$topicName][$partitionId]['offset'])) {
             if (isset($result[$topicName][$partitionId]['errCode'])) {
-                throw new \Kafka\Exception(\Kafka\Protocol\Decoder::getError($result[$topicName][$partitionId]['errCode']));
+                throw new Exception(Protocol\Decoder::getError($result[$topicName][$partitionId]['errCode']));
             } else {
-                throw new \Kafka\Exception('get offset failed. topic name:' . $this->topicName . ' partitionId: ' . $this->partitionId);
+                throw new Exception('get offset failed. topic name:' . $this->topicName . ' partitionId: ' . $this->partitionId);
             }
         }
 

@@ -14,6 +14,7 @@
 
 namespace Kafka\Protocol;
 
+use \Kafka\Exception\Protocol as ProtocolException;
 /**
 +------------------------------------------------------------------------------
 * Kafka protocol since Kafka v0.8
@@ -34,9 +35,8 @@ class Decoder extends Protocol
     /**
      * decode produce response
      *
-     * @param string $data
-     * @access public
      * @return array
+     * @access public
      */
     public function produceResponse()
     {
@@ -44,7 +44,7 @@ class Decoder extends Protocol
         $dataLen = self::unpack(self::BIT_B32, $this->stream->read(4, true));
         $dataLen = array_shift($dataLen);
         if (!$dataLen) {
-            throw new \Kafka\Exception\Protocol('produce response invalid.');
+            throw new ProtocolException('produce response invalid.');
         }
         $data = $this->stream->read($dataLen, true);
 
@@ -86,13 +86,12 @@ class Decoder extends Protocol
     /**
      * decode fetch response
      *
-     * @param string $data
+     * @return \Iterator
      * @access public
-     * @return Iterator
      */
     public function fetchResponse()
     {
-        return new \Kafka\Protocol\Fetch\Topic($this->stream);
+        return new Fetch\Topic($this->stream);
     }
 
     // }}}
@@ -101,9 +100,8 @@ class Decoder extends Protocol
     /**
      * decode metadata response
      *
-     * @param string $data
-     * @access public
      * @return array
+     * @access public
      */
     public function metadataResponse()
     {
@@ -113,7 +111,7 @@ class Decoder extends Protocol
         $dataLen = self::unpack(self::BIT_B32, $this->stream->read(4, true));
         $dataLen = array_shift($dataLen);
         if (!$dataLen) {
-            throw new \Kafka\Exception\Protocol('metaData response invalid.');
+            throw new ProtocolException('metaData response invalid.');
         }
         $data = $this->stream->read($dataLen, true);
         $offset = 4;
@@ -202,9 +200,8 @@ class Decoder extends Protocol
     /**
      * decode offset response
      *
-     * @param string $data
-     * @access public
      * @return array
+     * @access public
      */
     public function offsetResponse()
     {
@@ -212,7 +209,7 @@ class Decoder extends Protocol
         $dataLen = self::unpack(self::BIT_B32, $this->stream->read(4, true));
         $dataLen = array_shift($dataLen);
         if (!$dataLen) {
-            throw new \Kafka\Exception\Protocol('offset response invalid.');
+            throw new ProtocolException('offset response invalid.');
         }
         $data = $this->stream->read($dataLen, true);
         $offset = 4;
@@ -257,9 +254,8 @@ class Decoder extends Protocol
     /**
      * decode commit offset response
      *
-     * @param string $data
-     * @access public
      * @return array
+     * @access public
      */
     public function commitOffsetResponse()
     {
@@ -267,7 +263,7 @@ class Decoder extends Protocol
         $dataLen = self::unpack(self::BIT_B32, $this->stream->read(4, true));
         $dataLen = array_shift($dataLen);
         if (!$dataLen) {
-            throw new \Kafka\Exception\Protocol('commit offset response invalid.');
+            throw new ProtocolException('commit offset response invalid.');
         }
         $data = $this->stream->read($dataLen, true);
         $offset = 4;
@@ -303,9 +299,8 @@ class Decoder extends Protocol
     /**
      * decode fetch offset response
      *
-     * @param string $data
-     * @access public
      * @return array
+     * @access public
      */
     public function fetchOffsetResponse()
     {
@@ -313,7 +308,7 @@ class Decoder extends Protocol
         $dataLen = self::unpack(self::BIT_B32, $this->stream->read(4, true));
         $dataLen = array_shift($dataLen);
         if (!$dataLen) {
-            throw new \Kafka\Exception\Protocol('fetch offset response invalid.');
+            throw new ProtocolException('fetch offset response invalid.');
         }
         $data = $this->stream->read($dataLen, true);
         $offset = 4;

@@ -13,6 +13,7 @@
 // +---------------------------------------------------------------------------
 
 namespace Kafka\Protocol;
+use Kafka\Socket;
 
 /**
 +------------------------------------------------------------------------------
@@ -102,11 +103,11 @@ abstract class Protocol
     /**
      * __construct
      *
-     * @param \Kafka\Socket $stream
+     * @param Socket $stream
+     *
      * @access public
-     * @return void
      */
-    public function __construct(\Kafka\Socket $stream)
+    public function __construct(Socket $stream)
     {
         $this->stream = $stream;
     }
@@ -145,7 +146,11 @@ abstract class Protocol
      *
      * @static
      * @access public
-     * @return integer
+     *
+     * @param $type
+     * @param $bytes
+     *
+     * @return int
      */
     public static function unpack($type, $bytes)
     {
@@ -167,7 +172,11 @@ abstract class Protocol
      *
      * @static
      * @access public
-     * @return integer
+     *
+     * @param $type
+     * @param $data
+     *
+     * @return int
      */
     public static function pack($type, $data)
     {

@@ -13,6 +13,7 @@
 // +---------------------------------------------------------------------------
 
 namespace Kafka\Protocol\Fetch\Helper;
+use Kafka\Offset;
 
 /**
 +------------------------------------------------------------------------------
@@ -46,7 +47,8 @@ class CommitOffset extends HelperAbstract
      * __construct
      *
      * @access public
-     * @return void
+     *
+     * @param $client
      */
     public function __construct($client)
     {
@@ -60,7 +62,8 @@ class CommitOffset extends HelperAbstract
      * set consumer group
      *
      * @access public
-     * @return void
+     *
+     * @param $group
      */
     public function setGroup($group)
     {
@@ -109,8 +112,8 @@ class CommitOffset extends HelperAbstract
     {
         $partitionId = $partition->key();
         $topicName = $partition->getTopicName();
-        $offset    = $partition->getMessageOffset();
-        $offsetObject = new  \Kafka\Offset($this->client, $this->group, $topicName, $partitionId);
+        $offset    = $partition->getMessageOffset() + 1;
+        $offsetObject = new Offset($this->client, $this->group, $topicName, $partitionId);
         $offsetObject->setOffset($offset);
     }
 

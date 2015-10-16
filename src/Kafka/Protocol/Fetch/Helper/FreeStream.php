@@ -13,6 +13,7 @@
 // +---------------------------------------------------------------------------
 
 namespace Kafka\Protocol\Fetch\Helper;
+use Kafka\Client;
 
 /**
 +------------------------------------------------------------------------------
@@ -30,6 +31,8 @@ class FreeStream extends HelperAbstract
 {
     // {{{ members
 
+    /** @var Client */
+    protected $client;
     /**
      * streams
      *
@@ -46,7 +49,8 @@ class FreeStream extends HelperAbstract
      * __construct
      *
      * @access public
-     * @return void
+     *
+     * @param $client
      */
     public function __construct($client)
     {
@@ -60,7 +64,8 @@ class FreeStream extends HelperAbstract
      * set streams
      *
      * @access public
-     * @return void
+     *
+     * @param $streams
      */
     public function setStreams($streams)
     {

@@ -29,6 +29,10 @@ namespace Kafka;
 class Consumer
 {
     // {{{ consts
+    const LAST_OFFSET = -1;
+    const EARLIEST_OFFSET = -2;
+    const DEFAULT_LAST  = -2;
+    const DEFAULT_EARLY = -1;
     // }}}
     // {{{ members
 
@@ -81,14 +85,6 @@ class Consumer
     private $hostList = array();
 
     /**
-     * save broker connection
-     *
-     * @var array
-     * @access private
-     */
-    private $stream = array();
-
-    /**
      * maxSize
      *
      * @var integer
@@ -99,7 +95,7 @@ class Consumer
      * offsetStrategy
      * @var integer
      */
-    private $offsetStrategy = \Kafka\Offset::DEFAULT_EARLY;
+    private $offsetStrategy = Offset::DEFAULT_EARLY;
 
     // }}}
     // {{{ functions
@@ -109,7 +105,11 @@ class Consumer
      * set send messages
      *
      * @access public
-     * @return void
+     *
+     * @param      $hostList
+     * @param null $timeout
+     *
+     * @return $this
      */
     public static function getInstance($hostList, $timeout = null)
     {
@@ -127,12 +127,16 @@ class Consumer
      * __construct
      *
      * @access public
-     * @return void
+     *
+     * @param      $hostList
+     * @param null $timeout
      */
     private function __construct($hostList, $timeout = null)
     {
-        $zookeeper = new \Kafka\ZooKeeper($hostList, $timeout);
-        $this->client = new \Kafka\Client($zookeeper);
+        $this->hostList = $hostList;
+
+        $zookeeper = new ZooKeeper($hostList, $timeout);
+        $this->client = new Client($zookeeper);
     }
 
     // }}}
@@ -156,7 +160,11 @@ class Consumer
      * set topic name
      *
      * @access public
-     * @return void
+     *
+     * @param      $topicName
+     * @param null $defaultOffset
+     *
+     * @return $this
      */
     public function setTopic($topicName, $defaultOffset = null)
     {
@@ -180,15 +188,20 @@ class Consumer
      * set topic partition
      *
      * @access public
-     * @return void
+     *
+     * @param      $topicName
+     * @param int  $partitionId
+     * @param null $offset
+     *
+     * @return $this
      */
     public function setPartition($topicName, $partitionId = 0, $offset = null)
     {
         if (is_null($offset)) {
             if ($this->fromOffset) {
-                $offsetObject = new \Kafka\Offset($this->client, $this->group, $topicName, $partitionId);
+                $offsetObject = new Offset($this->client, $this->group, $topicName, $partitionId);
                 $offset = $offsetObject->getOffset($this->offsetStrategy);
-                \Kafka\Log::log('topic name:' . $topicName . ', part:' . $partitionId . 'get offset from kafka server, offet:' . $offset, LOG_DEBUG);
+                Log::log('topic name:' . $topicName . ', part:' . $partitionId . 'get offset from kafka server, offet:' . $offset, LOG_DEBUG);
             } else {
                 $offset = 0;
             }
@@ -221,11 +234,13 @@ class Consumer
      *
      * @param int $maxSize
      * @access public
-     * @return void
+     * @return $this
      */
     public function setMaxBytes($maxSize)
     {
         $this->maxSize = $maxSize;
+
+        return $this;
     }
 
     // }}}
@@ -236,11 +251,12 @@ class Consumer
      *
      * @param string $group
      * @access public
-     * @return void
+     * @return $this
      */
     public function setGroup($group)
     {
         $this->group = (string) $group;
+
         return $this;
     }
 
@@ -251,7 +267,7 @@ class Consumer
      * fetch message to broker
      *
      * @access public
-     * @return void
+     * @return bool|array
      */
     public function fetch()
     {
@@ -260,30 +276,29 @@ class Consumer
             return false;
         }
 
-        $responseData = array();
         $streams = array();
         foreach ($data as $host => $requestData) {
             $connArr = $this->client->getStream($host);
             $conn    = $connArr['stream'];
-            $encoder = new \Kafka\Protocol\Encoder($conn);
+            $encoder = new Protocol\Encoder($conn);
             $encoder->fetchRequest($requestData);
             $streams[$connArr['key']] = $conn;
         }
 
-        $fetch = new \Kafka\Protocol\Fetch\Topic($streams, $data);
+        $fetch = new Protocol\Fetch\Topic($streams, $data);
 
         // register fetch helper
-        $freeStream = new \Kafka\Protocol\Fetch\Helper\FreeStream($this->client);
+        $freeStream = new Protocol\Fetch\Helper\FreeStream($this->client);
         $freeStream->setStreams($streams);
-        \Kafka\Protocol\Fetch\Helper\Helper::registerHelper('freeStream', $freeStream);
+        Protocol\Fetch\Helper\Helper::registerHelper('freeStream', $freeStream);
 
         // register partition commit offset
-        $commitOffset = new \Kafka\Protocol\Fetch\Helper\CommitOffset($this->client);
+        $commitOffset = new Protocol\Fetch\Helper\CommitOffset($this->client);
         $commitOffset->setGroup($this->group);
-        \Kafka\Protocol\Fetch\Helper\Helper::registerHelper('commitOffset', $commitOffset);
+        Protocol\Fetch\Helper\Helper::registerHelper('commitOffset', $commitOffset);
 
-        $updateConsumer = new \Kafka\Protocol\Fetch\Helper\Consumer($this);
-        \Kafka\Protocol\Fetch\Helper\Helper::registerHelper('updateConsumer', $updateConsumer);
+        $updateConsumer = new Protocol\Fetch\Helper\Consumer($this);
+        Protocol\Fetch\Helper\Helper::registerHelper('updateConsumer', $updateConsumer);
 
         return $fetch;
     }
@@ -295,7 +310,7 @@ class Consumer
      * get client object
      *
      * @access public
-     * @return void
+     * @return Client
      */
     public function getClient()
     {
@@ -366,7 +381,7 @@ class Consumer
      * const EARLIEST_OFFSET = -2;
      * const DEFAULT_LAST  = -2;
      * const DEFAULT_EARLY = -1;
-     * @param type $offsetStrategy
+     * @param $offsetStrategy
      */
     public function setOffsetStrategy($offsetStrategy)
     {
