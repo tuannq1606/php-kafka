@@ -267,7 +267,7 @@ class Consumer
      * fetch message to broker
      *
      * @access public
-     * @return bool|array
+     * @return bool|Protocol\Fetch\Topic
      */
     public function fetch()
     {
