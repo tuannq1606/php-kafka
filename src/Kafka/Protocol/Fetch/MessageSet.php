@@ -17,7 +17,7 @@ namespace Kafka\Protocol\Fetch;
 use Kafka\Exception;
 use Kafka\Exception\OutOfRange;
 use Kafka\Log;
-use Decoder;
+use Kafka\Protocol\Decoder;
 
 /**
 +------------------------------------------------------------------------------
