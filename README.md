@@ -25,6 +25,7 @@ Add the lib directory to the PHP include_path and use an autoloader like the one
 
 Simply add a dependency on nmred/kafka-php to your project's composer.json file if you use Composer to manage the dependencies of your project. Here is a minimal example of a composer.json file :
 
+
 ```
 {
 	"require": {
