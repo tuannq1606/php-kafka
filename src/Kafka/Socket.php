@@ -335,8 +335,8 @@ class Socket
             // wait for stream to become available for writing
             $writable = stream_select($null, $write, $null, $this->sendTimeoutSec, $this->sendTimeoutUsec);
             if ($writable > 0) {
-                // write remaining buffer bytes to stream
-                $wrote = fwrite($this->stream, substr($buf, $written));
+                // write remaining buffer bytes to stream; @ needed here for suppress EAGAIN warnings
+                $wrote = @fwrite($this->stream, substr($buf, $written));
                 if ($wrote === -1 || $wrote === false) {
                     throw new Exception\Socket('Could not write ' . strlen($buf) . ' bytes to stream, completed writing only ' . $written . ' bytes');
                 }
